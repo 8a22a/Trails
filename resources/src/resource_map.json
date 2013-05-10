@@ -1,0 +1,26 @@
+{
+    "media": [
+        {
+            "defName": "IMAGE_MINUTE_TRAIL",
+            "type": "png-trans",
+            "file": "images/minute_trail.png"
+        },
+        {
+            "defName": "IMAGE_HOUR_TRAIL",
+            "type": "png-trans",
+            "file": "images/hour_trail.png"
+        },
+        {
+            "defName": "IMAGE_BACKGROUND",
+            "type": "png",
+            "file": "images/trails_background.png"
+        },
+        {
+            "defName": "IMAGE_MENU_ICON",
+            "type": "png",
+            "file": "images/menu_icon.png"
+        }
+    ],
+    "friendlyVersion": "VERSION",
+    "versionDefName": "APP_RESOURCES"
+}
