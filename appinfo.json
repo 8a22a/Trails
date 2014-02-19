@@ -1,0 +1,37 @@
+{
+  "uuid": "259595dd-cf74-48c7-a278-aadaea1c33ae",
+  "shortName": "Trails",
+  "longName": "Trails",
+  "companyName": "8a22a",
+  "versionCode": 2,
+  "versionLabel": "2.0.0",
+  "watchapp": {
+    "watchface": true
+  },
+  "appKeys": {},
+  "resources": {
+    "media": [
+      {
+        "type": "png",
+        "name": "IMAGE_MINUTE_TRAIL",
+        "file": "images/minute_trail.png"
+      },
+      {
+        "type": "png",
+        "name": "IMAGE_HOUR_TRAIL",
+        "file": "images/hour_trail.png"
+      },
+      {
+        "type": "png",
+        "name": "IMAGE_BACKGROUND",
+        "file": "images/trails_background.png"
+      },
+      {
+        "menuIcon": true,
+        "type": "png",
+        "name": "IMAGE_MENU_ICON",
+        "file": "images/menu_icon.png"
+      }
+    ]
+  }
+}
