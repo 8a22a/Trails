@@ -1,0 +1,7 @@
+# Emacs files
+*~
+# OS cache files
+.DS_Store
+# Ignore build generated files
+build
+.lock*
