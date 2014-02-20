@@ -47,10 +47,11 @@ void handle_init() {
 
   // Set up a layer for the minute hand.
   // Compositing tricks take the place of PNG transparency.
-  // TODO: Tweak the minute hand position... somehow?
   minute_hand_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MINUTE_TRAIL);
   minute_hand_layer = rot_bitmap_layer_create(minute_hand_image);
-  // TODO: Might need to tune compositing mode.
+  // Default frame for this RotBitmapLayer is GRect(0, 0, 185, 185)
+  layer_set_frame(bitmap_layer_get_layer((BitmapLayer *)minute_hand_layer),
+		  GRect(-20, -9, 185, 185));
   rot_bitmap_set_compositing_mode(minute_hand_layer, GCompOpOr);
   layer_add_child(root_window_layer,
 		  bitmap_layer_get_layer((BitmapLayer *)minute_hand_layer));
@@ -59,7 +60,12 @@ void handle_init() {
   // Compositing tricks take the place of PNG transparency.
   hour_hand_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_HOUR_TRAIL);
   hour_hand_layer = rot_bitmap_layer_create(hour_hand_image);
-  // TODO: Might need to tune compositing mode.
+
+  // Default frame for this RotBitmapLayer is GRect(0, 0, 151, 151).
+  // It's offset one pixel higher and righter than I'd expect
+  // to fit in with the minute hand.
+  layer_set_frame(bitmap_layer_get_layer((BitmapLayer *)hour_hand_layer),
+		  GRect(-3, 7, 151, 151));
   rot_bitmap_set_compositing_mode(hour_hand_layer, GCompOpOr);
   layer_add_child(root_window_layer,
 		  bitmap_layer_get_layer((BitmapLayer *)hour_hand_layer));
