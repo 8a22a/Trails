@@ -1,95 +1,96 @@
-#include "pebble_os.h"
-#include "pebble_app.h"
-#include "pebble_fonts.h"
+#include <pebble.h>
 		
-#define MY_UUID { 0x25, 0x95, 0x95, 0xDD, 0xCF, 0x74, 0x48, 0xC7, 0xA2, 0x78, 0xAA, 0xDA, 0xEA, 0x1C, 0x33, 0xAE }
-PBL_APP_INFO(MY_UUID,
-             "Trails", "8a22a",
-             1, 0, /* App version */
-             RESOURCE_ID_IMAGE_MENU_ICON,
-             APP_INFO_WATCH_FACE);
+Window *window;
 
-Window window;
+BitmapLayer *background_layer;
+RotBitmapLayer *minute_hand_layer, *hour_hand_layer;
 
-BmpContainer background_image_container;
+GBitmap *background_image, *minute_hand_image, *hour_hand_image;
 
-RotBmpPairContainer minute_hand_image_container;
-RotBmpPairContainer hour_hand_image_container;
+void update_watch(struct tm *t){
 
-void update_watch(PblTm* t){
+  long minute_hand_rotation = TRIG_MAX_ANGLE * (t->tm_min * 6) / 360;
+  long hour_hand_rotation = TRIG_MAX_ANGLE * (((t->tm_hour % 12) * 30) +
+					      (t->tm_min/2)) / 360;
+  rot_bitmap_layer_set_angle(minute_hand_layer, minute_hand_rotation);
+  rot_bitmap_layer_set_angle(hour_hand_layer, hour_hand_rotation);
 
-minute_hand_image_container.layer.white_layer.rotation = TRIG_MAX_ANGLE * (t->tm_min * 6) / 360;
-minute_hand_image_container.layer.black_layer.rotation = TRIG_MAX_ANGLE * (t->tm_min * 6) / 360;
-minute_hand_image_container.layer.layer.frame.origin.x = (144/2) - (minute_hand_image_container.layer.layer.frame.size.w/2);
-minute_hand_image_container.layer.layer.frame.origin.y = (168/2) - (minute_hand_image_container.layer.layer.frame.size.h/2);
-layer_mark_dirty(&minute_hand_image_container.layer.layer);	
-
-hour_hand_image_container.layer.white_layer.rotation = TRIG_MAX_ANGLE * (((t->tm_hour % 12) * 30) + (t->tm_min/2)) / 360;
-hour_hand_image_container.layer.black_layer.rotation = TRIG_MAX_ANGLE * (((t->tm_hour % 12) * 30) + (t->tm_min/2)) / 360;
-hour_hand_image_container.layer.layer.frame.origin.x = (144/2) - (hour_hand_image_container.layer.layer.frame.size.w/2);
-hour_hand_image_container.layer.layer.frame.origin.y = (168/2) - (hour_hand_image_container.layer.layer.frame.size.h/2);
-layer_mark_dirty(&hour_hand_image_container.layer.layer);
+  layer_mark_dirty(bitmap_layer_get_layer((BitmapLayer *)minute_hand_layer));
+  layer_mark_dirty(bitmap_layer_get_layer((BitmapLayer *)hour_hand_layer));
 
 }
 
 // Called once per second
-void handle_minute_tick(AppContextRef ctx, PebbleTickEvent *t) {
-update_watch(t->tick_time);
+void handle_minute_tick(struct tm *t, TimeUnits units_changed) {
+  (void)units_changed;
+  update_watch(t);
 }
 
 
 // Handle the start-up of the app
-void handle_init(AppContextRef app_ctx) {
+void handle_init() {
 
-// Create our app's base window
-window_init(&window, "Trails Watch");
-window_stack_push(&window, true);
-window_set_background_color(&window, GColorBlack);
+  // Create our app's base window
+  window = window_create();
+  Layer *root_window_layer = window_get_root_layer(window);
+  GRect root_window_bounds = layer_get_bounds(root_window_layer);
 
-resource_init_current_app(&APP_RESOURCES);
+  window_stack_push(window, true);
+  window_set_background_color(window, GColorBlack);
 
-// Set up a layer for the static watch face background
-bmp_init_container(RESOURCE_ID_IMAGE_BACKGROUND, &background_image_container);
-layer_add_child(&window.layer, &background_image_container.layer.layer);
+  // Set up a layer for the static watch face background
+  background_layer = bitmap_layer_create(root_window_bounds);
+  background_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACKGROUND);
+  bitmap_layer_set_bitmap(background_layer, background_image);
+  layer_add_child(root_window_layer,
+		  bitmap_layer_get_layer(background_layer));
 
-// Set up a layer for the minute hand with transparency, ensure the source image has a transparent area
-rotbmp_pair_init_container(RESOURCE_ID_IMAGE_MINUTE_TRAIL_WHITE, RESOURCE_ID_IMAGE_MINUTE_TRAIL_BLACK, &minute_hand_image_container);
-rotbmp_pair_layer_set_src_ic(&minute_hand_image_container.layer, GPoint(66, 66));
-layer_add_child(&window.layer, &minute_hand_image_container.layer.layer);	
+  // Set up a layer for the minute hand.
+  // Compositing tricks take the place of PNG transparency.
+  // TODO: Tweak the minute hand position... somehow?
+  minute_hand_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MINUTE_TRAIL);
+  minute_hand_layer = rot_bitmap_layer_create(minute_hand_image);
+  // TODO: Might need to tune compositing mode.
+  rot_bitmap_set_compositing_mode(minute_hand_layer, GCompOpOr);
+  layer_add_child(root_window_layer,
+		  bitmap_layer_get_layer((BitmapLayer *)minute_hand_layer));
 
-// Set up a layer for the hour hand with transparency, ensure the source image has a transparent area
-rotbmp_pair_init_container(RESOURCE_ID_IMAGE_HOUR_TRAIL_WHITE, RESOURCE_ID_IMAGE_HOUR_TRAIL_BLACK, &hour_hand_image_container);
-rotbmp_pair_layer_set_src_ic(&hour_hand_image_container.layer, GPoint(55, 55));
-layer_add_child(&window.layer, &hour_hand_image_container.layer.layer);
+  // Set up a layer for the hour hand.
+  // Compositing tricks take the place of PNG transparency.
+  hour_hand_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_HOUR_TRAIL);
+  hour_hand_layer = rot_bitmap_layer_create(hour_hand_image);
+  // TODO: Might need to tune compositing mode.
+  rot_bitmap_set_compositing_mode(hour_hand_layer, GCompOpOr);
+  layer_add_child(root_window_layer,
+		  bitmap_layer_get_layer((BitmapLayer *)hour_hand_layer));
 
-PblTm t;
-get_time(&t);
-update_watch(&t);
+  time_t now = time(NULL);
+  struct tm *t = localtime(&now);
+  update_watch(t);
+
+  tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
 
 }
 
-void handle_deinit(AppContextRef ctx) {
+void handle_deinit() {
 
-bmp_deinit_container(&background_image_container);
-rotbmp_pair_deinit_container(&minute_hand_image_container);
-rotbmp_pair_deinit_container(&hour_hand_image_container);
+  // Fairly sure casting a RotBitmapLayer to BitmapLayer won't
+  // fully destroy it, but it's the best we can do. :-(
+  bitmap_layer_destroy((BitmapLayer *)hour_hand_layer);
+  gbitmap_destroy(hour_hand_image);
+  bitmap_layer_destroy((BitmapLayer *)minute_hand_layer);
+  gbitmap_destroy(minute_hand_image);
+  gbitmap_destroy(background_image);
+  bitmap_layer_destroy(background_layer);
+  window_destroy(window);
+
 }
 
 
-// The main event/run loop for our app
-void pbl_main(void *params) {
-  PebbleAppHandlers handlers = {
+int main(void) {
 
-    // Handle app start
-    .init_handler = &handle_init,
-    .deinit_handler = &handle_deinit,
+  handle_init();
+  app_event_loop();
+  handle_deinit();
 
-    // Handle time updates
-    .tick_info = {
-      .tick_handler = &handle_minute_tick,
-      .tick_units = MINUTE_UNIT
-    }
-
-  };
-  app_event_loop(params, &handlers);
 }
