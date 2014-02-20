@@ -49,23 +49,40 @@ void handle_init() {
   // Compositing tricks take the place of PNG transparency.
   minute_hand_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_MINUTE_TRAIL);
   minute_hand_layer = rot_bitmap_layer_create(minute_hand_image);
-  // Default frame for this RotBitmapLayer is GRect(0, 0, 185, 185)
+
+  // Default frame for RotBitmapLayers is according to some
+  // opaque algorithm. Automatically centre it now.
+  GRect minute_frame = layer_get_frame(bitmap_layer_get_layer((BitmapLayer *)minute_hand_layer));
+  GRect new_minute_frame = GRect((144-minute_frame.size.w)/2,
+				 (168-minute_frame.size.h)/2,
+				 minute_frame.size.w, minute_frame.size.h);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "minute frame: %i, %i, %i, %i",
+	  minute_frame.origin.x, minute_frame.origin.y,
+	  minute_frame.size.w, minute_frame.size.h);
   layer_set_frame(bitmap_layer_get_layer((BitmapLayer *)minute_hand_layer),
-		  GRect(-20, -9, 185, 185));
+		  new_minute_frame);
+
   rot_bitmap_set_compositing_mode(minute_hand_layer, GCompOpOr);
   layer_add_child(root_window_layer,
 		  bitmap_layer_get_layer((BitmapLayer *)minute_hand_layer));
+
 
   // Set up a layer for the hour hand.
   // Compositing tricks take the place of PNG transparency.
   hour_hand_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_HOUR_TRAIL);
   hour_hand_layer = rot_bitmap_layer_create(hour_hand_image);
 
-  // Default frame for this RotBitmapLayer is GRect(0, 0, 151, 151).
-  // It's offset one pixel higher and righter than I'd expect
-  // to fit in with the minute hand.
+  GRect hour_frame = layer_get_frame(bitmap_layer_get_layer((BitmapLayer *)hour_hand_layer));
+  // The current images seem to look best if this frame is offset
+  // one more pixel. Still not perfect though.
+  GRect new_hour_frame = GRect((144-hour_frame.size.w)/2 + 1,
+			       (168-hour_frame.size.h)/2 + 1,
+			       hour_frame.size.w, hour_frame.size.h);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "hour frame: %i, %i, %i, %i",
+	  hour_frame.origin.x, hour_frame.origin.y,
+	  hour_frame.size.w, hour_frame.size.h);
   layer_set_frame(bitmap_layer_get_layer((BitmapLayer *)hour_hand_layer),
-		  GRect(-3, 7, 151, 151));
+		  new_hour_frame);
   rot_bitmap_set_compositing_mode(hour_hand_layer, GCompOpOr);
   layer_add_child(root_window_layer,
 		  bitmap_layer_get_layer((BitmapLayer *)hour_hand_layer));
